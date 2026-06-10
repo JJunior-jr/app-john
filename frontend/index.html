@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="App para registrar a rotina diária do bebê: amamentação, trocas de fralda, sono e banho." />
+  <title>App Rotina Bebê 🍼</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght=400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css?v=4" />
+</head>
+
+<body>
+
+  <header class="app-header" role="banner">
+    <h1 class="app-title">
+      🍼 App Rotina do João
+      <span>Registro diário simplificado</span>
+    </h1>
+
+    <nav class="date-nav" aria-label="Navegação de datas">
+      <button id="btn-prev-day" aria-label="Dia anterior">‹</button>
+      <span id="current-date-label" role="button" tabindex="0" aria-label="Selecionar data">
+        Carregando...
+      </span>
+      <button id="btn-next-day" aria-label="Próximo dia">›</button>
+    </nav>
+
+    <input type="date" id="date-picker-input"
+      style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;" />
+  </header>
+
+  <nav class="main-tabs" aria-label="Abas principais">
+    <button id="tab-daily" class="tab-btn active">Rotina Diária</button>
+    <button id="tab-reports" class="tab-btn">Relatórios</button>
+  </nav>
+
+  <main class="main-content" role="main">
+
+    <!-- VISÃO DIÁRIA -->
+    <div id="view-daily" class="view-section active">
+      <section class="day-summary" aria-label="Resumo do dia">
+      <div class="summary-item">
+        <div class="summary-value" id="sum-ml-offered">—</div>
+        <div class="summary-label">ML Ofertados</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" id="sum-ml-consumed">—</div>
+        <div class="summary-label">ML Consumidos</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" id="sum-diapers">—</div>
+        <div class="summary-label">Trocas</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" id="sum-breast">—</div>
+        <div class="summary-label">Amamentações no Peito</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" id="sum-sleep">—</div>
+        <div class="summary-label">Tempo de Sono</div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="feeding-title">
+      <div class="card-header">
+        <span class="card-icon" aria-hidden="true">🍼</span>
+        <h2 class="card-title" id="feeding-title">Amamentação</h2>
+        <span class="card-badge" id="feeding-badge" aria-label="Registros de hoje">0</span>
+        <button class="toggle-records-btn" data-target="feeding-list" aria-label="Expandir/recolher registros" title="Expandir/recolher registros">◀</button>
+      </div>
+      <div class="card-body">
+
+        <div class="btn-group">
+          <button id="btn-bottle" class="btn btn-primary" aria-expanded="false" aria-controls="ml-form">
+            🍼 Mamadeira
+          </button>
+          <button id="btn-Breast-left" class="btn btn-outline">
+            Peito E
+          </button>
+          <button id="btn-Breast-right" class="btn btn-outline">
+            Peito D
+          </button>
+          <button id="btn-Breast-both" class="btn btn-outline">
+            Ambos
+          </button>
+        </div>
+
+        <div class="ml-form" id="ml-form" role="group" aria-label="Registro de mamadeira">
+          <p class="ml-form-title">🍼 Quanto ofertou e quanto ele bebeu?</p>
+
+          <div class="ml-row">
+            <div class="ml-field">
+              <label for="ml-offered-input">ML Ofertados</label>
+              <input type="number" id="ml-offered-input" class="ml-input" placeholder="ex: 100" min="0" max="500" />
+              <div class="ml-chips" id="chips-offered" role="group" aria-label="Seleção rápida de ML ofertados">
+                <button class="ml-chip" data-ml="60" type="button">60</button>
+                <button class="ml-chip" data-ml="80" type="button">80</button>
+                <button class="ml-chip" data-ml="100" type="button">100</button>
+                <button class="ml-chip" data-ml="120" type="button">120</button>
+                <button class="ml-chip" data-ml="150" type="button">150</button>
+                <button class="ml-chip" data-ml="180" type="button">180</button>
+              </div>
+            </div>
+
+            <div class="ml-field">
+              <label for="ml-consumed-input">ML Consumidos</label>
+              <input type="number" id="ml-consumed-input" class="ml-input" placeholder="ex: 80" min="0" max="500" />
+              <div class="ml-chips" id="chips-consumed" role="group" aria-label="Seleção rápida de ML consumidos">
+                <button class="ml-chip" data-ml="60" type="button">60</button>
+                <button class="ml-chip" data-ml="80" type="button">80</button>
+                <button class="ml-chip" data-ml="100" type="button">100</button>
+                <button class="ml-chip" data-ml="120" type="button">120</button>
+                <button class="ml-chip" data-ml="150" type="button">150</button>
+                <button class="ml-chip" data-ml="180" type="button">180</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px">
+            <button id="btn-bottle-confirm" class="btn btn-primary">
+              ✅ Registrar Mamadeira
+            </button>
+          </div>
+        </div>
+
+        <div class="records-list" id="feeding-list" aria-live="polite" style="display: none;">
+          <p class="empty-state">Nenhum registro hoje 🍼</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="diaper-title">
+      <div class="card-header">
+        <span class="card-icon" aria-hidden="true">👶</span>
+        <h2 class="card-title" id="diaper-title">Troca de Fralda</h2>
+        <span class="card-badge" id="diaper-badge" aria-label="Trocas de hoje">0</span>
+        <button class="toggle-records-btn" data-target="diaper-list" aria-label="Expandir/recolher registros" title="Expandir/recolher registros">◀</button>
+      </div>
+      <div class="card-body">
+
+        <div class="btn-group">
+          <button id="btn-diaper-pee" class="btn btn-primary">💧 Xixi</button>
+          <button id="btn-diaper-poop" class="btn btn-primary">💩 Cocô</button>
+          <button id="btn-diaper-both" class="btn btn-outline">💧💩 Ambos</button>
+        </div>
+
+        <div class="records-list" id="diaper-list" aria-live="polite" style="display: none;">
+          <p class="empty-state">Nenhuma troca hoje 👶</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="sleep-title">
+      <div class="card-header">
+        <span class="card-icon" aria-hidden="true">😴</span>
+        <h2 class="card-title" id="sleep-title">Hora de Nanar</h2>
+        <span class="card-badge" id="sleep-badge" aria-label="Sonos de hoje">0</span>
+        <button class="toggle-records-btn" data-target="sleep-list" aria-label="Expandir/recolher registros" title="Expandir/recolher registros">◀</button>
+      </div>
+      <div class="card-body">
+
+        <div class="sleep-active-indicator" id="sleep-active-indicator" role="status" aria-live="polite">
+          <div class="sleep-dot" aria-hidden="true"></div>
+          <span>Sono em andamento...</span>
+        </div>
+
+        <div class="btn-group">
+          <button id="btn-sleep-start" class="btn btn-primary">
+            🌙 Começou a dormir
+          </button>
+          <button id="btn-sleep-end" class="btn btn-danger" style="display:none">
+            ☀️ Acordou!
+          </button>
+        </div>
+
+        <div class="records-list" id="sleep-list" aria-live="polite" style="display: none;">
+          <p class="empty-state">Nenhum sono registrado 😴</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="bath-title">
+      <div class="card-header">
+        <span class="card-icon" aria-hidden="true">🛁</span>
+        <h2 class="card-title" id="bath-title">Hora do Banho</h2>
+        <span class="card-badge" id="bath-badge" aria-label="Banhos de hoje">0</span>
+        <button class="toggle-records-btn" data-target="bath-list" aria-label="Expandir/recolher registros" title="Expandir/recolher registros">◀</button>
+      </div>
+      <div class="card-body">
+
+        <div class="btn-group">
+          <button id="btn-bath" class="btn btn-primary">🛁 Registrar Banho</button>
+        </div>
+
+        <div class="records-list" id="bath-list" aria-live="polite" style="display: none;">
+          <p class="empty-state">Nenhum banho hoje 🛁</p>
+        </div>
+      </div>
+    </section>
+    </div> <!-- FIM VISÃO DIÁRIA -->
+
+    <!-- VISÃO DE RELATÓRIOS -->
+    <div id="view-reports" class="view-section">
+      <section class="card">
+        <div class="card-header">
+          <span class="card-icon" aria-hidden="true">📊</span>
+          <h2 class="card-title">Histórico Geral</h2>
+        </div>
+        <div class="card-body">
+          <div class="filter-group">
+            <label for="report-filter">Filtrar por:</label>
+            <select id="report-filter" class="filter-select">
+              <option value="all">Todos os Dias</option>
+              <option value="month">Agrupar por Mês</option>
+              <option value="year">Agrupar por Ano</option>
+            </select>
+          </div>
+          
+          <div class="table-responsive">
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th id="col-date">Data</th>
+                  <th>Peito (Esquerdo/Direito/Ambos)</th>
+                  <th>Mamadeira (Ofert / Cons)</th>
+                  <th>Fraldas</th>
+                  <th>Sono</th>
+                  <th>Banhos</th>
+                </tr>
+              </thead>
+              <tbody id="report-tbody" aria-live="polite">
+                <tr><td colspan="6" class="empty-state">Carregando relatórios...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div> <!-- FIM VISÃO RELATÓRIOS -->
+
+  </main>
+
+  <div id="toast-container" class="toast-container" aria-live="polite" role="status"></div>
+
+  <script type="module" src="/static/js/app.js?v=5"></script>
+
+</body>
+
+</html>
