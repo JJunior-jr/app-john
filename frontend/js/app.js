@@ -10,7 +10,8 @@ let activeSleepId = null;
 
 // ── Utilitários de data ───────────────────────────────────────────────────────
 function toISODate(d) {
-  return d.toISOString().split('T')[0];
+  const pad = (n) => (n < 10 ? '0' : '') + n;
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 }
 
 function formatDate(d) {
