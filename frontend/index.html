@@ -52,6 +52,14 @@
         <div class="summary-label">ML Consumidos</div>
       </div>
       <div class="summary-item">
+        <div class="summary-value" id="sum-ml-percent">—</div>
+        <div class="summary-label">Aceitação (%)</div>
+      </div>
+      <div class="summary-item" style="display: none;" id="sum-ml-avg-percent-box">
+        <div class="summary-value" id="sum-ml-avg-percent">—</div>
+        <div class="summary-label">Média do Dia</div>
+      </div>
+      <div class="summary-item">
         <div class="summary-value" id="sum-diapers">—</div>
         <div class="summary-label">Trocas</div>
       </div>
@@ -234,7 +242,9 @@
                 <tr>
                   <th id="col-date">Data</th>
                   <th>Peito (Esquerdo/Direito/Ambos)</th>
-                  <th>Mamadeira (Ofert / Cons)</th>
+                  <th>Ofertado (ml)</th>
+                  <th>Consumido (ml)</th>
+                  <th>Diferença (%)</th>
                   <th>Fraldas</th>
                   <th>Sono</th>
                   <th>Banhos</th>
@@ -252,6 +262,29 @@
   </main>
 
   <div id="toast-container" class="toast-container" aria-live="polite" role="status"></div>
+
+  <!-- Modal Edição Mamadeira -->
+  <div id="edit-feeding-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h3>Editar Mamadeira</h3>
+      <div class="modal-body">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="edit-feed-time">Horário (HH:MM)</label>
+          <input type="time" id="edit-feed-time" class="modal-input" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc;"/>
+        </div>
+        <div class="form-group" id="edit-feed-bottle-fields" style="margin-bottom: 15px;">
+          <label for="edit-feed-offered">Ofertado (ml)</label>
+          <input type="number" id="edit-feed-offered" class="modal-input" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 10px;" />
+          <label for="edit-feed-consumed">Consumido (ml)</label>
+          <input type="number" id="edit-feed-consumed" class="modal-input" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc;"/>
+        </div>
+      </div>
+      <div class="modal-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+        <button id="btn-cancel-edit-feed" class="btn btn-outline">Cancelar</button>
+        <button id="btn-save-edit-feed" class="btn btn-primary">Salvar</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="/static/js/app.js?v=6"></script>
 
