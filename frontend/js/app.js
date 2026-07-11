@@ -591,7 +591,7 @@ async function updateSummary() {
     if (bottleFeedings.length > 0) {
       const avg = bottleFeedings.reduce((acc, f) => acc + (f.ml_consumed || 0) / f.ml_offered, 0) / bottleFeedings.length;
       document.getElementById('sum-ml-avg-percent').textContent = Math.round(avg * 100) + '%';
-      document.getElementById('sum-ml-avg-percent-box').style.display = 'flex';
+      document.getElementById('sum-ml-avg-percent-box').style.display = 'block';
     } else {
       document.getElementById('sum-ml-avg-percent-box').style.display = 'none';
     }
@@ -603,7 +603,7 @@ async function updateSummary() {
     
     const awakeBox = document.getElementById('summary-awake-current-box');
     if (s.current_awake_time_min != null && s.current_awake_time_min > 0) {
-      awakeBox.style.display = 'flex';
+      awakeBox.style.display = 'block';
       document.getElementById('sum-awake-current').textContent = formatDuration(s.current_awake_time_min);
     } else {
       awakeBox.style.display = 'none';
