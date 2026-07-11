@@ -122,12 +122,13 @@ class DaySummary(BaseModel):
     diapers: list[DiaperResponse]
     sleeps: list[SleepResponse]
     baths: list[BathResponse]
-    total_ml_offered: int = 0
-    total_ml_consumed: int = 0
-    total_diaper_changes: int = 0
-    total_sleep_min: float = 0
-    total_awake_min: float = 0
-    current_awake_time_min: Optional[float] = None
+    total_ml_offered: int
+    total_ml_consumed: int
+    total_diaper_changes: int
+    total_sleep_min: float
+    total_awake_min: float
+    current_awake_time_min: float | None = None
+    current_fasting_time_min: float | None = None
     total_breast_feedings: int = 0
 
 class ReportDay(BaseModel):

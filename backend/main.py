@@ -85,6 +85,11 @@ async def get_day_summary(
         )
         last_sleep = last_sleep_result.scalars().first()
 
+        last_feeding_result = await db.execute(
+            select(FeedingRecord).order_by(FeedingRecord.recorded_at.desc()).limit(1)
+        )
+        last_feeding = last_feeding_result.scalars().first()
+
         baths_result = await db.execute(
             select(BathRecord).where(BathRecord.date == target_date)
         )
@@ -151,6 +156,15 @@ async def get_day_summary(
             if ls_end <= now:
                 current_awake_time_min = round((now - ls_end).total_seconds() / 60, 1)
 
+    # Tempo Sem Comer Atual
+    current_fasting_time_min = None
+    if target_date == now.date() and last_feeding:
+        lf_time = last_feeding.recorded_at
+        if lf_time.tzinfo is None:
+            lf_time = lf_time.replace(tzinfo=ZoneInfo("America/Sao_Paulo"))
+        if lf_time <= now:
+            current_fasting_time_min = round((now - lf_time).total_seconds() / 60, 1)
+
     return DaySummary(
         date=target_date,
         feedings=feedings,
@@ -163,6 +177,7 @@ async def get_day_summary(
         total_sleep_min=total_sleep_min,
         total_awake_min=total_awake_min,
         current_awake_time_min=current_awake_time_min,
+        current_fasting_time_min=current_fasting_time_min,
         total_breast_feedings=total_breast_feedings,
     )
 

@@ -608,6 +608,14 @@ async function updateSummary() {
     } else {
       awakeBox.style.display = 'none';
     }
+    
+    const fastingBox = document.getElementById('summary-fasting-current-box');
+    if (s.current_fasting_time_min != null && s.current_fasting_time_min > 0) {
+      fastingBox.style.display = 'block';
+      document.getElementById('sum-fasting-current').textContent = formatDuration(s.current_fasting_time_min);
+    } else {
+      fastingBox.style.display = 'none';
+    }
   } catch {
     // silencia erros de summary (não crítico)
   }
