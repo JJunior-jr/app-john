@@ -680,70 +680,119 @@ async function loadReports() {
   }
 }
 
+let sleepChartInstance = null;
+let milkChartInstance = null;
+
+function renderCharts(data) {
+  const ctxSleep = document.getElementById('sleepChart');
+  const ctxMilk = document.getElementById('milkChart');
+  if (!ctxSleep || !ctxMilk) return;
+
+  if (sleepChartInstance) sleepChartInstance.destroy();
+  if (milkChartInstance) milkChartInstance.destroy();
+
+  const chartData = [...data].reverse();
+  const labels = chartData.map(d => d.label);
+
+  sleepChartInstance = new Chart(ctxSleep, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Horas Acordado',
+          data: chartData.map(d => parseFloat((d.total_awake_min / 60).toFixed(1))),
+          backgroundColor: '#86efac'
+        },
+        {
+          label: 'Horas de Sono',
+          data: chartData.map(d => parseFloat((d.total_sleep_min / 60).toFixed(1))),
+          backgroundColor: '#38bdf8'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { stacked: true },
+        y: { stacked: true, beginAtZero: true }
+      }
+    }
+  });
+
+  milkChartInstance = new Chart(ctxMilk, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Ofertado (ml)',
+          data: chartData.map(d => d.total_ml_offered),
+          backgroundColor: '#e5e7eb'
+        },
+        {
+          label: 'Consumido (ml)',
+          data: chartData.map(d => d.total_ml_consumed),
+          backgroundColor: '#0ea5e9'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+}
+
 function renderReports() {
-  const filter = document.getElementById('report-filter').value;
-  const tbody = document.getElementById('report-tbody');
+  const period = document.getElementById('report-period').value;
+  const tbody = document.getElementById('reports-tbody');
 
   if (rawReports.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nenhum registro encontrado.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12" class="empty-state">Nenhum registro encontrado.</td></tr>';
     return;
   }
 
-  let aggregated = [];
+  let aggregated = rawReports.map(r => ({
+    label: new Date(r.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+    ...r
+  }));
 
-  if (filter === 'all') {
-    aggregated = rawReports.map(r => ({
-      label: new Date(r.date + 'T12:00:00').toLocaleDateString('pt-BR'),
-      ...r
-    }));
-  } else if (filter === 'month') {
-    const map = {};
-    rawReports.forEach(r => {
-      const d = new Date(r.date + 'T12:00:00');
-      const label = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-      if (!map[label]) {
-        map[label] = { label, total_ml_offered: 0, total_ml_consumed: 0, total_diaper_changes: 0, total_sleep_min: 0, total_baths: 0, total_breast_feedings: 0, sortKey: d.getTime() };
-      }
-      map[label].total_ml_offered += r.total_ml_offered;
-      map[label].total_ml_consumed += r.total_ml_consumed;
-      map[label].total_diaper_changes += r.total_diaper_changes;
-      map[label].total_sleep_min += r.total_sleep_min;
-      map[label].total_baths += r.total_baths;
-      map[label].total_breast_feedings += r.total_breast_feedings;
-    });
-    aggregated = Object.values(map).sort((a, b) => b.sortKey - a.sortKey);
-  } else if (filter === 'year') {
-    const map = {};
-    rawReports.forEach(r => {
-      const d = new Date(r.date + 'T12:00:00');
-      const label = d.getFullYear().toString();
-      if (!map[label]) {
-        map[label] = { label, total_ml_offered: 0, total_ml_consumed: 0, total_diaper_changes: 0, total_sleep_min: 0, total_baths: 0, total_breast_feedings: 0, sortKey: d.getFullYear() };
-      }
-      map[label].total_ml_offered += r.total_ml_offered;
-      map[label].total_ml_consumed += r.total_ml_consumed;
-      map[label].total_diaper_changes += r.total_diaper_changes;
-      map[label].total_sleep_min += r.total_sleep_min;
-      map[label].total_baths += r.total_baths;
-      map[label].total_breast_feedings += r.total_breast_feedings;
-    });
-    aggregated = Object.values(map).sort((a, b) => b.sortKey - a.sortKey);
+  if (period === '7') {
+    aggregated = aggregated.slice(0, 7);
+  } else if (period === '30') {
+    aggregated = aggregated.slice(0, 30);
   }
+
+  renderCharts(aggregated);
 
   tbody.innerHTML = aggregated.map(r => {
     let diff = '0%';
+    let pct = 0;
     if (r.total_ml_offered > 0) {
-      diff = Math.round((r.total_ml_consumed / r.total_ml_offered) * 100) + '%';
+      pct = Math.round((r.total_ml_consumed / r.total_ml_offered) * 100);
+      diff = pct + '%';
     }
+    
+    const alertStyle = (r.total_ml_offered > 0 && pct < 70) ? 'color: #dc2626; font-weight: bold; background: #fef2f2;' : '';
+
     return `
     <tr>
       <td>${r.label}</td>
+      <td>${formatDuration(r.total_awake_min)}</td>
+      <td>${formatDuration(r.total_sleep_min)}</td>
+      <td>${formatDuration(r.avg_sleep_min)}</td>
+      <td>${r.feedings_count}</td>
       <td>${r.total_breast_feedings}</td>
       <td>${r.total_ml_offered}</td>
-      <td>${r.total_ml_consumed}</td>
-      <td>${diff}</td>
+      <td style="${alertStyle}">${r.total_ml_consumed}</td>
+      <td style="${alertStyle}">${diff}</td>
+      <td>${formatDuration(r.max_fasting_min)}</td>
       <td>${r.total_diaper_changes}</td>
-      <td>${formatDuration(r.total_sleep_min)}</td>
       <td>${r.total_baths}</td>
     </tr>
   `}).join('');
@@ -776,7 +825,7 @@ function setupTabs() {
     loadReports();
   });
 
-  document.getElementById('report-filter').addEventListener('change', renderReports);
+  document.getElementById('report-period').addEventListener('change', renderReports);
 }
 
 

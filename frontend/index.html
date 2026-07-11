@@ -10,7 +10,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght=400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/css/style.css?v=4" />
+  <link rel="stylesheet" href="/static/css/style.css?v=6">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -224,44 +225,60 @@
     </div> <!-- FIM VISÃO DIÁRIA -->
 
     <!-- VISÃO DE RELATÓRIOS -->
-    <div id="view-reports" class="view-section">
-      <section class="card">
+    <section id="view-reports" class="view-section">
+      <div class="card">
         <div class="card-header">
-          <span class="card-icon" aria-hidden="true">📊</span>
-          <h2 class="card-title">Histórico Geral</h2>
+          <span class="card-icon">📊</span>
+          <h2 class="card-title">Histórico de Relatórios</h2>
         </div>
         <div class="card-body">
+
+          <!-- Gráficos (Feat 4) -->
+          <div style="display: flex; flex-direction: column; gap: 20px; margin-bottom: 30px;">
+            <div style="background: var(--gray-50); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--gray-100);">
+              <h3 style="font-size: 0.95rem; color: var(--gray-700); margin-bottom: 10px; text-align: center;">Sono vs Acordado (Últimos 7 dias)</h3>
+              <canvas id="sleepChart" style="max-height: 250px;"></canvas>
+            </div>
+            <div style="background: var(--gray-50); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--gray-100);">
+              <h3 style="font-size: 0.95rem; color: var(--gray-700); margin-bottom: 10px; text-align: center;">Consumo de Leite (Últimos 7 dias)</h3>
+              <canvas id="milkChart" style="max-height: 250px;"></canvas>
+            </div>
+          </div>
+
           <div class="filter-group">
-            <label for="report-filter">Filtrar por:</label>
-            <select id="report-filter" class="filter-select">
-              <option value="all">Todos os Dias</option>
-              <option value="month">Agrupar por Mês</option>
-              <option value="year">Agrupar por Ano</option>
+            <label for="report-period">Período:</label>
+            <select id="report-period" class="filter-select">
+              <option value="all">Todo Histórico</option>
+              <option value="7">Últimos 7 Dias</option>
+              <option value="30">Últimos 30 Dias</option>
             </select>
           </div>
-          
+
           <div class="table-responsive">
             <table class="report-table">
               <thead>
                 <tr>
                   <th id="col-date">Data</th>
-                  <th>Peito (Esquerdo/Direito/Ambos)</th>
+                  <th>Total Acordado</th>
+                  <th>Sono Total</th>
+                  <th>Média/Cochilo</th>
+                  <th>Nº Mamadas</th>
+                  <th>Peito (Total)</th>
                   <th>Ofertado (ml)</th>
                   <th>Consumido (ml)</th>
                   <th>Diferença (%)</th>
+                  <th>Máx Jejum</th>
                   <th>Fraldas</th>
-                  <th>Sono</th>
                   <th>Banhos</th>
                 </tr>
               </thead>
-              <tbody id="report-tbody" aria-live="polite">
-                <tr><td colspan="6" class="empty-state">Carregando relatórios...</td></tr>
+              <tbody id="reports-tbody">
               </tbody>
             </table>
           </div>
         </div>
-      </section>
-    </div> <!-- FIM VISÃO RELATÓRIOS -->
+      </div>
+    </section>
 
   </main>
 

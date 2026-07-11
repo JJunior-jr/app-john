@@ -43,6 +43,14 @@ Esta funcionalidade engloba as regras de visualização do tempo acordado do Jo�
 - Buscar o último registro de amamentação realizado (independentemente de ser ontem ou hoje).
 - Calcular quanto tempo faz que ele não come, em relação ao momento atual.
 - Se a última amamentação foi dia 09/07 às 22h, e agora são 02:00 do dia 10/07, o painel deve mostrar que ele está sem mamar há 4 horas.
+
+---
+
+## 🚀 Feat 4: Dashboard de Estatísticas e Relatórios Avançados
+- **Gráficos Visuais**: Inclusão de gráficos interativos (via Chart.js) exibindo relação Sono vs Acordado e Ofertado vs Consumido dos últimos 7 dias.
+- **Detalhamento no Histórico**: Refatoração da tabela de relatórios para incluir "Nº Mamadas", "Máx Jejum", "Tempo Acordado" e "Média Cochilo".
+- **Fatiamento de Sono no Histórico**: Assim como no painel diário, o histórico agora fatia e distribui horas de sono adequadamente quando passam da meia-noite.
+- **Alertas Visuais**: Destaque em vermelho pálido caso a diferença (Aceitação da Mamadeira) seja menor que 70%.
 - Exemplo: Se o sono começou no dia 09/07 às 22:00 e terminou às 02:00 do dia 10/07:
   - 2 horas (das 22:00 às 23:59) devem ser computadas no total do dia 09.
   - 2 horas (das 00:00 às 02:00) devem ser computadas no total do dia 10.

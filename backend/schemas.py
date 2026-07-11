@@ -139,6 +139,11 @@ class ReportDay(BaseModel):
     total_sleep_min: float = 0
     total_baths: int = 0
     total_breast_feedings: int = 0
+    total_awake_min: float = 0
+    feedings_count: int = 0
+    sleeps_count: int = 0
+    avg_sleep_min: float = 0
+    max_fasting_min: float = 0
 
 # Adicione isso na seção ── Feeding ── (perto de FeedingCreate)
 class FeedingUpdate(BaseModel):

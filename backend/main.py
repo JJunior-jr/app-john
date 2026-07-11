@@ -186,9 +186,9 @@ async def get_day_summary(
 async def get_reports_history() -> list[ReportDay]:
     """Retorna um histórico diário consolidado para relatórios."""
     async with AsyncSessionLocal() as db:
-        feedings = list((await db.execute(select(FeedingRecord))).scalars().all())
+        feedings = list((await db.execute(select(FeedingRecord).order_by(FeedingRecord.recorded_at))).scalars().all())
         diapers = list((await db.execute(select(DiaperChange))).scalars().all())
-        sleeps = list((await db.execute(select(SleepRecord))).scalars().all())
+        sleeps = list((await db.execute(select(SleepRecord).order_by(SleepRecord.start_time))).scalars().all())
         baths = list((await db.execute(select(BathRecord))).scalars().all())
 
     reports_map: dict[date, ReportDay] = {}
@@ -198,8 +198,12 @@ async def get_reports_history() -> list[ReportDay]:
             reports_map[d] = ReportDay(date=d)
         return reports_map[d]
 
+    now = datetime.now(ZoneInfo('America/Sao_Paulo'))
+    last_feeding_time = None
+
     for f in feedings:
         day = get_day(f.date)
+        day.feedings_count += 1
         if f.feeding_type == "bottle":
             day.total_ml_offered += f.ml_offered or 0
             day.total_ml_consumed += f.ml_consumed or 0
@@ -209,14 +213,62 @@ async def get_reports_history() -> list[ReportDay]:
             elif f.breast_side == "both":
                 day.total_breast_feedings += 2
 
+        current_time = f.recorded_at
+        if current_time.tzinfo is None:
+            current_time = current_time.replace(tzinfo=ZoneInfo("America/Sao_Paulo"))
+
+        if last_feeding_time:
+            fasting_min = (current_time - last_feeding_time).total_seconds() / 60
+            if fasting_min > day.max_fasting_min:
+                day.max_fasting_min = fasting_min
+        last_feeding_time = current_time
+
     for d in diapers:
         get_day(d.date).total_diaper_changes += 1
 
     for s in sleeps:
-        get_day(s.date).total_sleep_min += s.duration_min or 0
+        s_start = s.start_time
+        if s_start.tzinfo is None:
+            s_start = s_start.replace(tzinfo=ZoneInfo("America/Sao_Paulo"))
+            
+        s_end = s.end_time
+        if s_end is None:
+            s_end = now
+        elif s_end.tzinfo is None:
+            s_end = s_end.replace(tzinfo=ZoneInfo("America/Sao_Paulo"))
+            
+        current = s_start
+        while current < s_end:
+            current_date = current.date()
+            next_day = datetime.combine(current_date + timedelta(days=1), datetime.min.time(), tzinfo=ZoneInfo("America/Sao_Paulo"))
+            end_of_chunk = min(s_end, next_day)
+            
+            chunk_min = (end_of_chunk - current).total_seconds() / 60
+            day = get_day(current_date)
+            day.total_sleep_min += chunk_min
+            
+            if current == s_start:
+                day.sleeps_count += 1
+                
+            current = next_day
 
     for b in baths:
         get_day(b.date).total_baths += 1
+
+    for d, day_obj in reports_map.items():
+        if d == now.date():
+            day_start = datetime.combine(d, datetime.min.time(), tzinfo=ZoneInfo("America/Sao_Paulo"))
+            total_time_in_day_min = max(0, (now - day_start).total_seconds() / 60)
+        elif d < now.date():
+            total_time_in_day_min = 24 * 60
+        else:
+            total_time_in_day_min = 0
+            
+        day_obj.total_awake_min = max(0, round(total_time_in_day_min - day_obj.total_sleep_min, 1))
+        day_obj.total_sleep_min = round(day_obj.total_sleep_min, 1)
+        day_obj.max_fasting_min = round(day_obj.max_fasting_min, 1)
+        if day_obj.sleeps_count > 0:
+            day_obj.avg_sleep_min = round(day_obj.total_sleep_min / day_obj.sleeps_count, 1)
 
     return sorted(reports_map.values(), key=lambda x: x.date, reverse=True)
 
