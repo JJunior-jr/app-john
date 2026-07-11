@@ -126,6 +126,8 @@ class DaySummary(BaseModel):
     total_ml_consumed: int = 0
     total_diaper_changes: int = 0
     total_sleep_min: float = 0
+    total_awake_min: float = 0
+    current_awake_time_min: Optional[float] = None
     total_breast_feedings: int = 0
 
 class ReportDay(BaseModel):

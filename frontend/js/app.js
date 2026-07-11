@@ -549,6 +549,15 @@ async function updateSummary() {
     document.getElementById('sum-breast').textContent = s.total_breast_feedings;
     document.getElementById('sum-diapers').textContent = s.total_diaper_changes;
     document.getElementById('sum-sleep').textContent = formatDuration(s.total_sleep_min);
+    document.getElementById('sum-awake-total').textContent = formatDuration(s.total_awake_min);
+    
+    const awakeBox = document.getElementById('summary-awake-current-box');
+    if (s.current_awake_time_min != null && s.current_awake_time_min > 0) {
+      awakeBox.style.display = 'flex';
+      document.getElementById('sum-awake-current').textContent = formatDuration(s.current_awake_time_min);
+    } else {
+      awakeBox.style.display = 'none';
+    }
   } catch {
     // silencia erros de summary (não crítico)
   }
