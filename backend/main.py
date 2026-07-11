@@ -233,7 +233,7 @@ async def get_reports_history() -> list[ReportDay]:
             
         s_end = s.end_time
         if s_end is None:
-            s_end = now
+            s_end = min(now, s_start + timedelta(hours=24))
         elif s_end.tzinfo is None:
             s_end = s_end.replace(tzinfo=ZoneInfo("America/Sao_Paulo"))
             
