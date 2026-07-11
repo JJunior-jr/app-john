@@ -198,19 +198,26 @@ async function loadFeeding() {
     if (r.feeding_type === 'bottle') {
       icon = '🍼';
       const consumed = r.ml_consumed != null ? `/${r.ml_consumed}ml` : '';
-      detail = `Mamadeira ${r.ml_offered}ml${consumed}`;
+      let percentStr = '';
+      if (r.ml_consumed != null && r.ml_offered > 0) {
+          const pct = Math.round((r.ml_consumed / r.ml_offered) * 100);
+          percentStr = ` (${pct}%)`;
+      }
+      detail = `Mamadeira ${r.ml_offered}ml${consumed}${percentStr}`;
     } else {
       const sideMap = { left: 'Peito Esquerdo 🤱', right: 'Peito Direito 🤱', both: 'Ambos os Peitos 🤱' };
       icon = '🤱';
       detail = sideMap[r.breast_side] || 'Peito';
     }
+    const off = r.ml_offered != null ? r.ml_offered : 'null';
+    const cons = r.ml_consumed != null ? r.ml_consumed : 'null';
     return `
       <div class="record-item" id="feed-${r.id}">
         <span class="record-icon">${icon}</span>
         <div class="record-info">
           <div class="record-time">
             ${formatTime(r.recorded_at)} 
-            <button class="record-edit-btn" onclick="editFeeding(${r.id}, '${r.recorded_at}')" title="Editar horário">✏️</button>
+            <button class="record-edit-btn" onclick="editFeeding(${r.id}, '${r.recorded_at}', ${off}, ${cons})" title="Editar">✏️</button>
           </div>
           <div class="record-detail">${detail}</div>
         </div>
@@ -220,26 +227,53 @@ async function loadFeeding() {
   }).join('');
 }
 
-window.editFeeding = async (id, currentIsoStr) => {
+window.editFeeding = (id, currentIsoStr, mlOffered, mlConsumed) => {
   const currentFormatted = formatTime(currentIsoStr);
-  const newTime = prompt('Alterar horário (formato HH:MM):', currentFormatted);
-  if (!newTime || newTime === currentFormatted) return;
-
-  const regex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-  if (!regex.test(newTime)) return toast('Formato inválido! Use HH:MM (ex: 14:30)', 'error');
-
-  const updatedDateTime = new Date(currentIsoStr);
-  const [hours, minutes] = newTime.split(':');
-  updatedDateTime.setHours(parseInt(hours), parseInt(minutes));
-
-  try {
-    await api.feeding.update(id, { recorded_at: toLocalISOStringWithOffset(updatedDateTime) });
-    toast('Horário atualizado com sucesso!');
-    await loadFeeding();
-    await updateSummary();
-  } catch (err) {
-    toast(err.message, 'error');
+  document.getElementById('edit-feed-time').value = currentFormatted;
+  
+  const bottleFields = document.getElementById('edit-feed-bottle-fields');
+  if (mlOffered !== null) {
+      bottleFields.style.display = 'block';
+      document.getElementById('edit-feed-offered').value = mlOffered;
+      document.getElementById('edit-feed-consumed').value = mlConsumed || '';
+  } else {
+      bottleFields.style.display = 'none';
   }
+  
+  const modal = document.getElementById('edit-feeding-modal');
+  modal.style.display = 'flex';
+  
+  document.getElementById('btn-cancel-edit-feed').onclick = () => {
+      modal.style.display = 'none';
+  };
+  
+  document.getElementById('btn-save-edit-feed').onclick = async () => {
+      const newTime = document.getElementById('edit-feed-time').value;
+      if (!newTime) return toast('Preencha o horário!', 'error');
+      
+      const payload = {};
+      if (newTime !== currentFormatted) {
+          const updatedDateTime = new Date(currentIsoStr);
+          const [hours, minutes] = newTime.split(':');
+          updatedDateTime.setHours(parseInt(hours), parseInt(minutes));
+          payload.recorded_at = toLocalISOStringWithOffset(updatedDateTime);
+      }
+      
+      if (mlOffered !== null) {
+          payload.ml_offered = parseInt(document.getElementById('edit-feed-offered').value) || 0;
+          payload.ml_consumed = parseInt(document.getElementById('edit-feed-consumed').value) || 0;
+      }
+      
+      try {
+          await api.feeding.update(id, payload);
+          toast('Registro atualizado com sucesso!');
+          modal.style.display = 'none';
+          await loadFeeding();
+          await updateSummary();
+      } catch (err) {
+          toast(err.message, 'error');
+      }
+  };
 };
 
 window.deleteFeed = async (id) => {
@@ -546,6 +580,22 @@ async function updateSummary() {
     const s = await api.summary(toISODate(currentDate));
     document.getElementById('sum-ml-offered').textContent = `${s.total_ml_offered}ml`;
     document.getElementById('sum-ml-consumed').textContent = `${s.total_ml_consumed}ml`;
+    
+    let percentStr = '0%';
+    if (s.total_ml_offered > 0) {
+      percentStr = Math.round((s.total_ml_consumed / s.total_ml_offered) * 100) + '%';
+    }
+    document.getElementById('sum-ml-percent').textContent = percentStr;
+    
+    const bottleFeedings = s.feedings.filter(f => f.feeding_type === 'bottle' && f.ml_offered > 0);
+    if (bottleFeedings.length > 0) {
+      const avg = bottleFeedings.reduce((acc, f) => acc + (f.ml_consumed || 0) / f.ml_offered, 0) / bottleFeedings.length;
+      document.getElementById('sum-ml-avg-percent').textContent = Math.round(avg * 100) + '%';
+      document.getElementById('sum-ml-avg-percent-box').style.display = 'flex';
+    } else {
+      document.getElementById('sum-ml-avg-percent-box').style.display = 'none';
+    }
+
     document.getElementById('sum-breast').textContent = s.total_breast_feedings;
     document.getElementById('sum-diapers').textContent = s.total_diaper_changes;
     document.getElementById('sum-sleep').textContent = formatDuration(s.total_sleep_min);
@@ -663,16 +713,23 @@ function renderReports() {
     aggregated = Object.values(map).sort((a, b) => b.sortKey - a.sortKey);
   }
 
-  tbody.innerHTML = aggregated.map(r => `
+  tbody.innerHTML = aggregated.map(r => {
+    let diff = '0%';
+    if (r.total_ml_offered > 0) {
+      diff = Math.round((r.total_ml_consumed / r.total_ml_offered) * 100) + '%';
+    }
+    return `
     <tr>
       <td>${r.label}</td>
       <td>${r.total_breast_feedings}</td>
-      <td>${r.total_ml_offered}ml / ${r.total_ml_consumed}ml</td>
+      <td>${r.total_ml_offered}</td>
+      <td>${r.total_ml_consumed}</td>
+      <td>${diff}</td>
       <td>${r.total_diaper_changes}</td>
       <td>${formatDuration(r.total_sleep_min)}</td>
       <td>${r.total_baths}</td>
     </tr>
-  `).join('');
+  `}).join('');
 }
 
 // ════════════════════════════════════════════════════════════════════════════
