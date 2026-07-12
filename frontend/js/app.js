@@ -670,7 +670,7 @@ function setupToggleButtons() {
 let rawReports = [];
 
 async function loadReports() {
-  const tbody = document.getElementById('report-tbody');
+  const tbody = document.getElementById('reports-tbody');
   tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Carregando relatórios...</td></tr>';
   try {
     rawReports = await api.reports.history();
