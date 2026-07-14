@@ -9,9 +9,19 @@ services:
     environment:
       - TZ=America/Sao_Paulo
     volumes:
-      # Isso cria um volume gerenciado pelo Docker que guarda os dados do SQLite com segurança
-      - baby_data:/app/data
+      # Modificado para bind mount: facilita colocar o backup (baby_routine.db) na pasta ./data
+      - ./data:/app/data
+    restart: always
+    
+  docs:
+    image: node:lts
+    container_name: docs_baby_routine
+    working_dir: /app/docs
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"
+    command: npm start -- --host 0.0.0.0
     restart: always
 
-volumes:
-  baby_data:
+# Removido o block volumes: baby_data: pois agora usamos bind mount ./data
