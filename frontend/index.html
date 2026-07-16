@@ -10,8 +10,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght=400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/css/style.css?v=6">
+  <link rel="stylesheet" href="/static/css/style.css?v=7">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 </head>
 
 <body>
@@ -233,20 +234,29 @@
         </div>
         <div class="card-body">
 
+          <div class="filter-group" style="margin-bottom: 20px;">
+            <label for="chart-period">Período (Gráficos):</label>
+            <select id="chart-period" class="filter-select">
+              <option value="7">Últimos 7 Dias</option>
+              <option value="15">Últimos 15 Dias</option>
+              <option value="30">Últimos 30 Dias</option>
+            </select>
+          </div>
+
           <!-- Gráficos (Feat 4) -->
           <div style="display: flex; flex-direction: column; gap: 20px; margin-bottom: 30px;">
             <div style="background: var(--gray-50); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--gray-100);">
-              <h3 style="font-size: 0.95rem; color: var(--gray-700); margin-bottom: 10px; text-align: center;">Sono vs Acordado (Últimos 7 dias)</h3>
+              <h3 style="font-size: 0.95rem; color: var(--gray-700); margin-bottom: 10px; text-align: center;">Sono vs Acordado</h3>
               <canvas id="sleepChart" style="max-height: 250px;"></canvas>
             </div>
             <div style="background: var(--gray-50); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--gray-100);">
-              <h3 style="font-size: 0.95rem; color: var(--gray-700); margin-bottom: 10px; text-align: center;">Consumo de Leite (Últimos 7 dias)</h3>
+              <h3 style="font-size: 0.95rem; color: var(--gray-700); margin-bottom: 10px; text-align: center;">Consumo de Leite</h3>
               <canvas id="milkChart" style="max-height: 250px;"></canvas>
             </div>
           </div>
 
           <div class="filter-group">
-            <label for="report-period">Período:</label>
+            <label for="report-period">Período (Tabela):</label>
             <select id="report-period" class="filter-select">
               <option value="all">Todo Histórico</option>
               <option value="7">Últimos 7 Dias</option>
@@ -307,7 +317,7 @@
     </div>
   </div>
 
-  <script type="module" src="/static/js/app.js?v=6"></script>
+  <script type="module" src="/static/js/app.js?v=7"></script>
 
 </body>
 

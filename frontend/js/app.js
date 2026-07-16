@@ -4,6 +4,8 @@
  */
 import { api } from './api.js';
 
+Chart.register(ChartDataLabels);
+
 // ── Estado global ────────────────────────────────────────────────────────────
 let currentDate = new Date();
 let activeSleepId = null;
@@ -717,6 +719,13 @@ function renderCharts(data) {
       scales: {
         x: { stacked: true },
         y: { stacked: true, beginAtZero: true }
+      },
+      plugins: {
+        datalabels: {
+          color: '#333',
+          font: { weight: 'bold' },
+          formatter: (value) => value > 0 ? value + 'h' : ''
+        }
       }
     }
   });
@@ -727,14 +736,17 @@ function renderCharts(data) {
       labels: labels,
       datasets: [
         {
-          label: 'Ofertado (ml)',
-          data: chartData.map(d => d.total_ml_offered),
-          backgroundColor: '#e5e7eb'
-        },
-        {
           label: 'Consumido (ml)',
           data: chartData.map(d => d.total_ml_consumed),
           backgroundColor: '#0ea5e9'
+        },
+        {
+          label: 'Não consumido (ml)',
+          data: chartData.map(d => {
+            const diff = d.total_ml_offered - d.total_ml_consumed;
+            return diff > 0 ? diff : 0;
+          }),
+          backgroundColor: '#e5e7eb'
         }
       ]
     },
@@ -742,14 +754,34 @@ function renderCharts(data) {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-        y: { beginAtZero: true }
+        x: { stacked: true },
+        y: { stacked: true, beginAtZero: true }
+      },
+      plugins: {
+        datalabels: {
+          color: (context) => context.datasetIndex === 1 ? '#666' : '#fff',
+          font: { weight: 'bold', size: 11 },
+          formatter: (value, context) => {
+            if (value <= 0) return '';
+            const consumed = context.chart.data.datasets[0].data[context.dataIndex];
+            const notConsumed = context.chart.data.datasets[1].data[context.dataIndex];
+            const offered = consumed + notConsumed;
+            if (context.datasetIndex === 0) { 
+              const pct = offered > 0 ? Math.round((consumed / offered) * 100) : 0;
+              return `${consumed}ml (${pct}%)`;
+            } else {
+              return `${value}ml`;
+            }
+          }
+        }
       }
     }
   });
 }
 
 function renderReports() {
-  const period = document.getElementById('report-period').value;
+  const tablePeriod = document.getElementById('report-period').value;
+  const chartPeriod = document.getElementById('chart-period').value;
   const tbody = document.getElementById('reports-tbody');
 
   if (rawReports.length === 0) {
@@ -762,15 +794,18 @@ function renderReports() {
     ...r
   }));
 
-  if (period === '7') {
-    aggregated = aggregated.slice(0, 7);
-  } else if (period === '30') {
-    aggregated = aggregated.slice(0, 30);
-  }
+  let chartAggregated = [...aggregated];
+  if (chartPeriod === '7') chartAggregated = chartAggregated.slice(0, 7);
+  else if (chartPeriod === '15') chartAggregated = chartAggregated.slice(0, 15);
+  else if (chartPeriod === '30') chartAggregated = chartAggregated.slice(0, 30);
 
-  renderCharts(aggregated);
+  let tableAggregated = [...aggregated];
+  if (tablePeriod === '7') tableAggregated = tableAggregated.slice(0, 7);
+  else if (tablePeriod === '30') tableAggregated = tableAggregated.slice(0, 30);
 
-  tbody.innerHTML = aggregated.map(r => {
+  renderCharts(chartAggregated);
+
+  tbody.innerHTML = tableAggregated.map(r => {
     let diff = '0%';
     let pct = 0;
     if (r.total_ml_offered > 0) {
@@ -826,6 +861,7 @@ function setupTabs() {
   });
 
   document.getElementById('report-period').addEventListener('change', renderReports);
+  document.getElementById('chart-period').addEventListener('change', renderReports);
 }
 
 
