@@ -113,3 +113,36 @@ Depois que você codificou, testou na sua máquina, criou o PR e a branch princi
    ```
 
 Pronto! Seu App será recarregado já com as novas lógicas de tempo, percentuais e relatórios atualizados em tela cheia na internet. Os registros antigos permanecerão intocáveis, uma vez que o banco de dados `baby_routine.db` está sendo salvo externamente nos volumes do Docker de forma persistente.
+
+---
+
+## 📚 Lições Aprendidas no Deploy e Manutenção (Atualizado em 16/07/2026 às 22:30)
+
+Durante o processo de deploy e testes em produção na VPS, enfrentamos alguns desafios técnicos que geraram aprendizados valiosos para a sustentação do projeto:
+
+1. **Firewall e Redes do Docker (`iptables` e `502 Bad Gateway`):**
+   * **O Erro:** Ao rodar `docker compose up --build`, as regras de rede (`iptables`) do Linux se corromperam, fazendo com que o Nginx perdesse a comunicação com a API.
+   * **A Lição:** Quando containers perdem conectividade externa "do nada" na VPS após um rebuild, a solução mais eficaz é reiniciar o serviço principal do Docker (`sudo systemctl restart docker`) para forçar o sistema operacional a recriar as pontes de rede e as regras de firewall do zero.
+
+2. **Mapeamento de Volumes do Nginx Proxy Manager:**
+   * **O Erro:** Ao mapearmos a pasta do Nginx como `./data/nginx:/data`, o Nginx iniciou com um banco de dados em branco, exibindo a tela de "Congratulations" e perdendo todas as rotas de domínio (Proxy Hosts).
+   * **A Lição:** O Nginx Proxy Manager cria sua própria estrutura de pastas (incluindo o `database.sqlite`) na raiz do volume `/data`. O correto é mapear a raiz (`./data:/data`) para preservar o banco de dados interno e manter os certificados HTTPS e rotas salvos.
+
+3. **Permissões do SQLite (Erro: `attempt to write a readonly database`):**
+   * **O Erro:** A API travava (retornando erro 500) ao tentar finalizar um sono em andamento ou criar novos registros.
+   * **A Lição:** Ao copiar o banco de dados via `scp` ou `docker cp` para a VPS (usando pastas compartilhadas/bind mounts), o arquivo fica pertencendo ao usuário `root` ou `ubuntu`. Como a API roda por segurança com um usuário restrito (`appuser`), ela perdia o direito de escrita. A solução definitiva para esse conflito de Bind Mounts foi garantir permissão global na pasta de dados (`sudo chmod -R 777 ~/app-john/data`).
+
+4. **Tratamento de Exceções no Frontend (Cascata de Falhas):**
+   * **O Erro:** Como a API falhava ao salvar devido às permissões do banco, a função `Promise.all` do Javascript no frontend recebia o erro 500 e interrompia toda a execução da página, travando a interface de carregamento (spinner infinito).
+   * **A Lição:** Falhas em endpoints específicos não devem quebrar a tela inteira. É fundamental isolar as chamadas (usando `try/catch` individualizados) para que a interface continue operante mesmo se uma rota específica da API cair.
+
+### 🚀 Oportunidade de Melhoria Futura: Backup Automático (Cron Job)
+Em vez de depender de downloads manuais do arquivo `baby_routine.db` (o que pode causar corrupção se baixado no exato milissegundo em que uma gravação ocorre), a arquitetura ideal prevê a criação de uma rotina automática na VPS. 
+
+**Como implementar:**
+Criar uma tarefa no `crontab` do Linux para rodar todos os dias às 03:00 da manhã um script que faça um *dump* seguro do banco ativo:
+```bash
+# Exemplo de comando seguro para snapshot do SQLite:
+sqlite3 /home/ubuntu/app-john/data/baby_routine.db ".backup '/home/ubuntu/app-john/backups/backup_diario.db'"
+```
+Desta forma, teremos sempre um arquivo "frio" e seguro (`backup_diario.db`) pronto para ser baixado a qualquer momento, sem risco de corrupção do banco em uso.
